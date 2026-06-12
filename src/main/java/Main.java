@@ -15,6 +15,7 @@ public class Main {
                 flag=false;
                 break;
             }
+            else
             System.out.println(command+": command not found");
 
         }
