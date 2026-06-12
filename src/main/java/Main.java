@@ -11,11 +11,11 @@ public class Main {
             Scanner sc = new Scanner(System.in);
             String command = sc.nextLine();
     
-            if(command=="exit") {
-                flag=false;
-                break;
+            if(command.equals("exit")) {
+               
+               break;
             }
-            else
+            
             System.out.println(command+": command not found");
 
         }
