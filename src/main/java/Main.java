@@ -20,7 +20,7 @@ public class Main {
             }
              else if(command.startsWith("type ")) {
                 String input =command.substring(5);
-                if(input.equals("exit") || input.equals("echo") )
+                if(input.equals("exit") || input.equals("echo") || input.equals("type")  )
                      System.out.println(input+" is a shell builtin");
                 else System.out.println(input+": not found");    
             }
