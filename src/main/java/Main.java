@@ -71,7 +71,7 @@ public class Main {
             else if (command.startsWith("cd ")) {
                 String target = command.substring(3);
 
-                File dir = new File(target);
+                File dir = new File(currentDirectory, target);;
 
                 if (dir.exists() && dir.isDirectory()) {
                     currentDirectory = dir.getAbsolutePath();
