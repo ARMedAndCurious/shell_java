@@ -46,7 +46,8 @@ public class Main {
 
                 if (input.equals("exit")
                         || input.equals("echo")
-                        || input.equals("type")) {
+                        || input.equals("type")
+                        || input.equals("pwd")) {
 
                     System.out.println(input + " is a shell builtin");
                 } else {
@@ -58,6 +59,10 @@ public class Main {
                         System.out.println(input + ": not found");
                     }
                 }
+            }
+
+            else if(command.equals("pwd")) {
+                    System.out.println(System.getProperty("user.dir"));
             }
 
             else {
