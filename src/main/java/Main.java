@@ -71,6 +71,10 @@ public class Main {
             else if (command.startsWith("cd ")) {
                 String target = command.substring(3);
 
+                if (target.equals("~")) {
+                    target = System.getenv("HOME");
+                }
+
                 File dir;
 
                 if (target.startsWith("/")) {
