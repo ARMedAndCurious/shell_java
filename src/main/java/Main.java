@@ -25,6 +25,34 @@ public class Main {
         return null;
     }
 
+    private static List<String> parseCommand(String command) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuote = false;
+
+        for (char c : command.toCharArray()) {
+
+            if (c == '\'') {
+                inQuote = !inQuote;
+            } else if (c == ' ' && !inQuote) {
+
+                if (current.length() > 0) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                }
+
+            } else {
+                current.append(c);
+            }
+        }
+
+        if (current.length() > 0) {
+            tokens.add(current.toString());
+        }
+
+        return tokens;
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
@@ -34,13 +62,19 @@ public class Main {
             System.out.print("$ ");
 
             String command = sc.nextLine();
+            List<String> parts = parseCommand(command);
 
             if (command.equals("exit")) {
                 break;
             }
 
-            else if (command.startsWith("echo ")) {
-                System.out.println(command.substring(5));
+            else if (!parts.isEmpty() && parts.get(0).equals("echo")) {
+
+                if (parts.size() > 1) {
+                    System.out.println(String.join(" ", parts.subList(1, parts.size())));
+                } else {
+                    System.out.println();
+                }
             }
 
             else if (command.startsWith("type ")) {
@@ -93,18 +127,14 @@ public class Main {
             }
 
             else {
-                String[] parts = command.split(" ");
-                File executable = findExecutable(parts[0]);
+               
+                File executable = findExecutable(parts.get(0));
 
                 if (executable == null) {
-                    System.out.println(parts[0] + ": command not found");
+                    System.out.println(parts.get(0) + ": command not found");
                 } else {
                     List<String> cmd = new ArrayList<>();
-                    cmd.add(parts[0]);
-
-                    for (int i = 1; i < parts.length; i++) {
-                        cmd.add(parts[i]);
-                    }
+                    cmd.addAll(parts);
 
                     Process process = new ProcessBuilder(cmd)
                             .directory(new File(currentDirectory))
