@@ -26,36 +26,54 @@ public class Main {
     }
 
     private static List<String> parseCommand(String command) {
-        List<String> tokens = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
+    List<String> tokens = new ArrayList<>();
+    StringBuilder current = new StringBuilder();
 
-        for (char c : command.toCharArray()) {
+    boolean inSingleQuote = false;
+    boolean inDoubleQuote = false;
+    boolean escaped = false;
 
-            if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-            } else if (c == '"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-            } else if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
+    for (char c : command.toCharArray()) {
 
-                if (current.length() > 0) {
-                    tokens.add(current.toString());
-                    current.setLength(0);
-                }
+        if (escaped) {
+            current.append(c);
+            escaped = false;
+            continue;
+        }
 
-            } else {
-                current.append(c);
+        if (c == '\\' && !inSingleQuote && !inDoubleQuote) {
+            escaped = true;
+            continue;
+        }
+
+        if (c == '\'' && !inDoubleQuote) {
+            inSingleQuote = !inSingleQuote;
+        }
+
+        else if (c == '"' && !inSingleQuote) {
+            inDoubleQuote = !inDoubleQuote;
+        }
+
+        else if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
+
+            if (current.length() > 0) {
+                tokens.add(current.toString());
+                current.setLength(0);
             }
+
         }
 
-        if (current.length() > 0) {
-            tokens.add(current.toString());
+        else {
+            current.append(c);
         }
-
-        return tokens;
     }
 
+    if (current.length() > 0) {
+        tokens.add(current.toString());
+    }
+
+    return tokens;
+}
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
