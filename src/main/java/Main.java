@@ -33,39 +33,63 @@ public class Main {
     boolean inDoubleQuote = false;
     boolean escaped = false;
 
-    for (char c : command.toCharArray()) {
+    for (int i = 0; i < command.length(); i++) {
+        char c = command.charAt(i);
 
+        // Backslash escaping outside quotes
         if (escaped) {
             current.append(c);
             escaped = false;
             continue;
         }
 
-        if (c == '\\' && !inSingleQuote && !inDoubleQuote) {
+        if (!inSingleQuote && !inDoubleQuote && c == '\\') {
             escaped = true;
             continue;
         }
 
+        // Backslashes inside double quotes
+        if (inDoubleQuote && c == '\\') {
+
+            if (i + 1 < command.length()) {
+                char next = command.charAt(i + 1);
+
+                if (next == '"' || next == '\\') {
+                    current.append(next);
+                    i++; // skip next character
+                    continue;
+                }
+            }
+
+            // keep the backslash literally
+            current.append('\\');
+            continue;
+        }
+
+        // Single quote handling
         if (c == '\'' && !inDoubleQuote) {
             inSingleQuote = !inSingleQuote;
+            continue;
         }
 
-        else if (c == '"' && !inSingleQuote) {
+        // Double quote handling
+        if (c == '"' && !inSingleQuote) {
             inDoubleQuote = !inDoubleQuote;
+            continue;
         }
 
-        else if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
+        // Token separator
+        if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
 
             if (current.length() > 0) {
                 tokens.add(current.toString());
                 current.setLength(0);
             }
 
+            continue;
         }
 
-        else {
-            current.append(c);
-        }
+        current.append(c);
     }
 
     if (current.length() > 0) {
