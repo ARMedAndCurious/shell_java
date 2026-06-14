@@ -28,13 +28,16 @@ public class Main {
     private static List<String> parseCommand(String command) {
         List<String> tokens = new ArrayList<>();
         StringBuilder current = new StringBuilder();
-        boolean inQuote = false;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
 
         for (char c : command.toCharArray()) {
 
-            if (c == '\'') {
-                inQuote = !inQuote;
-            } else if (c == ' ' && !inQuote) {
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            } else if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
 
                 if (current.length() > 0) {
                     tokens.add(current.toString());
@@ -127,7 +130,7 @@ public class Main {
             }
 
             else {
-               
+
                 File executable = findExecutable(parts.get(0));
 
                 if (executable == null) {
