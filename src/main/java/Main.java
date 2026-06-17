@@ -275,6 +275,7 @@ public class Main {
                 }
 
                 while (iterator.hasNext()) {
+                    Job job = iterator.next();
 
                     String marker = "";
 
