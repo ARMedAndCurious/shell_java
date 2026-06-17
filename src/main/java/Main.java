@@ -2,6 +2,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.io.PrintWriter;
 
 public class Main {
 
@@ -26,78 +27,79 @@ public class Main {
     }
 
     private static List<String> parseCommand(String command) {
-    List<String> tokens = new ArrayList<>();
-    StringBuilder current = new StringBuilder();
+        List<String> tokens = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
 
-    boolean inSingleQuote = false;
-    boolean inDoubleQuote = false;
-    boolean escaped = false;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        boolean escaped = false;
 
-    for (int i = 0; i < command.length(); i++) {
-        char c = command.charAt(i);
+        for (int i = 0; i < command.length(); i++) {
+            char c = command.charAt(i);
 
-        // Backslash escaping outside quotes
-        if (escaped) {
-            current.append(c);
-            escaped = false;
-            continue;
-        }
+            // Backslash escaping outside quotes
+            if (escaped) {
+                current.append(c);
+                escaped = false;
+                continue;
+            }
 
-        if (!inSingleQuote && !inDoubleQuote && c == '\\') {
-            escaped = true;
-            continue;
-        }
+            if (!inSingleQuote && !inDoubleQuote && c == '\\') {
+                escaped = true;
+                continue;
+            }
 
-        // Backslashes inside double quotes
-        if (inDoubleQuote && c == '\\') {
+            // Backslashes inside double quotes
+            if (inDoubleQuote && c == '\\') {
 
-            if (i + 1 < command.length()) {
-                char next = command.charAt(i + 1);
+                if (i + 1 < command.length()) {
+                    char next = command.charAt(i + 1);
 
-                if (next == '"' || next == '\\') {
-                    current.append(next);
-                    i++; // skip next character
-                    continue;
+                    if (next == '"' || next == '\\') {
+                        current.append(next);
+                        i++; // skip next character
+                        continue;
+                    }
                 }
+
+                // keep the backslash literally
+                current.append('\\');
+                continue;
             }
 
-            // keep the backslash literally
-            current.append('\\');
-            continue;
-        }
-
-        // Single quote handling
-        if (c == '\'' && !inDoubleQuote) {
-            inSingleQuote = !inSingleQuote;
-            continue;
-        }
-
-        // Double quote handling
-        if (c == '"' && !inSingleQuote) {
-            inDoubleQuote = !inDoubleQuote;
-            continue;
-        }
-
-        // Token separator
-        if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
-
-            if (current.length() > 0) {
-                tokens.add(current.toString());
-                current.setLength(0);
+            // Single quote handling
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                continue;
             }
 
-            continue;
+            // Double quote handling
+            if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            // Token separator
+            if (c == ' ' && !inSingleQuote && !inDoubleQuote) {
+
+                if (current.length() > 0) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                }
+
+                continue;
+            }
+
+            current.append(c);
         }
 
-        current.append(c);
+        if (current.length() > 0) {
+            tokens.add(current.toString());
+        }
+
+        return tokens;
     }
 
-    if (current.length() > 0) {
-        tokens.add(current.toString());
-    }
-
-    return tokens;
-}
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
@@ -108,6 +110,20 @@ public class Main {
 
             String command = sc.nextLine();
             List<String> parts = parseCommand(command);
+            String outputFile = null;
+            int redirectIndex = -1;
+
+            for (int i = 0; i < parts.size(); i++) {
+                if (parts.get(i).equals(">") || parts.get(i).equals("1>")) {
+                    redirectIndex = i;
+                    outputFile = parts.get(i + 1);
+                    break;
+                }
+            }
+
+            if (redirectIndex != -1) {
+                parts = new ArrayList<>(parts.subList(0, redirectIndex));
+            }
 
             if (command.equals("exit")) {
                 break;
@@ -115,10 +131,18 @@ public class Main {
 
             else if (!parts.isEmpty() && parts.get(0).equals("echo")) {
 
+                String result = "";
+
                 if (parts.size() > 1) {
-                    System.out.println(String.join(" ", parts.subList(1, parts.size())));
+                    result = String.join(" ", parts.subList(1, parts.size()));
+                }
+
+                if (outputFile == null) {
+                    System.out.println(result);
                 } else {
-                    System.out.println();
+                    PrintWriter writer = new PrintWriter(outputFile);
+                    writer.println(result);
+                    writer.close();
                 }
             }
 
@@ -181,10 +205,17 @@ public class Main {
                     List<String> cmd = new ArrayList<>();
                     cmd.addAll(parts);
 
-                    Process process = new ProcessBuilder(cmd)
-                            .directory(new File(currentDirectory))
-                            .inheritIO()
-                            .start();
+                    ProcessBuilder pb = new ProcessBuilder(cmd);
+                    pb.directory(new File(currentDirectory));
+
+                    if (outputFile == null) {
+                        pb.inheritIO();
+                    } else {
+                        pb.redirectOutput(new File(outputFile));
+                        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                    }
+
+                    Process process = pb.start();
                     process.waitFor();
                 }
             }
