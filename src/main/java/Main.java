@@ -7,6 +7,19 @@ import java.io.PrintWriter;
 import java.io.FileWriter;
 
 public class Main {
+    static class Job {
+        int jobId;
+        Process process;
+        String command;
+
+        Job(int jobId,
+                Process process,
+                String command) {
+            this.jobId = jobId;
+            this.process = process;
+            this.command = command;
+        }
+    }
 
     private static File findExecutable(String command) {
         String path = System.getenv("PATH");
@@ -107,6 +120,7 @@ public class Main {
 
         String currentDirectory = System.getProperty("user.dir");
         int nextJobId = 1;
+        List<Job> jobs = new ArrayList<>();
 
         while (true) {
             System.out.print("$ ");
@@ -125,7 +139,6 @@ public class Main {
             for (int i = 0; i < parts.size(); i++) {
 
                 String token = parts.get(i);
-                
 
                 if (token.equals(">") || token.equals("1>")) {
                     outputFile = parts.get(i + 1);
@@ -159,7 +172,6 @@ public class Main {
                     break;
                 }
 
-                
                 if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
                     background = true;
                     parts.remove(parts.size() - 1);
@@ -247,8 +259,26 @@ public class Main {
                 }
             }
 
-            else if (command.startsWith("jobs")) {
+            else if (command.equals("jobs")) {
 
+                for (int i = 0; i < jobs.size(); i++) {
+
+                    Job job = jobs.get(i);
+
+                    if (job.process.isAlive()) {
+
+                        String marker = (i == jobs.size() - 1)
+                                ? "+"
+                                : "-";
+
+                        System.out.printf(
+                                "[%d]%s  %-24s %s%n",
+                                job.jobId,
+                                marker,
+                                "Running",
+                                job.command);
+                    }
+                }
             }
 
             else {
@@ -293,6 +323,8 @@ public class Main {
                     Process process = pb.start();
 
                     if (background) {
+
+                        jobs.add(new Job(nextJobId, process, command));
 
                         System.out.println(
                                 "[" + nextJobId + "] " +
