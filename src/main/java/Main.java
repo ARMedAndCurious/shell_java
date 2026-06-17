@@ -1,8 +1,10 @@
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.io.PrintWriter;
+import java.io.FileWriter;
 
 public class Main {
 
@@ -110,23 +112,44 @@ public class Main {
 
             String command = sc.nextLine();
             List<String> parts = parseCommand(command);
+
             String outputFile = null;
             String errorFile = null;
 
+            boolean appendOutput = false;
+            boolean appendError = false;
+
             for (int i = 0; i < parts.size(); i++) {
 
-                if (parts.get(i).equals(">") ||
-                        parts.get(i).equals("1>")) {
+                String token = parts.get(i);
 
+                if (token.equals(">") || token.equals("1>")) {
                     outputFile = parts.get(i + 1);
+                    appendOutput = false;
 
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
                 }
 
-                else if (parts.get(i).equals("2>")) {
+                else if (token.equals(">>") || token.equals("1>>")) {
+                    outputFile = parts.get(i + 1);
+                    appendOutput = true;
 
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+
+                else if (token.equals("2>")) {
                     errorFile = parts.get(i + 1);
+                    appendError = false;
+
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
+
+                else if (token.equals("2>>")) {
+                    errorFile = parts.get(i + 1);
+                    appendError = true;
 
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
@@ -147,7 +170,10 @@ public class Main {
 
                 if (outputFile != null) {
 
-                    PrintWriter writer = new PrintWriter(outputFile);
+                    FileWriter fw = new FileWriter(outputFile, appendOutput);
+
+                    PrintWriter writer = new PrintWriter(fw);
+
                     writer.println(result);
                     writer.close();
 
@@ -226,13 +252,27 @@ public class Main {
                     if (outputFile == null) {
                         pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                     } else {
-                        pb.redirectOutput(new File(outputFile));
+                        if (appendOutput) {
+                            pb.redirectOutput(
+                                    ProcessBuilder.Redirect.appendTo(
+                                            new File(outputFile)));
+                        } else {
+                            pb.redirectOutput(
+                                    new File(outputFile));
+                        }
                     }
 
                     if (errorFile == null) {
                         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                     } else {
-                        pb.redirectError(new File(errorFile));
+                        if (appendError) {
+                            pb.redirectError(
+                                    ProcessBuilder.Redirect.appendTo(
+                                            new File(errorFile)));
+                        } else {
+                            pb.redirectError(
+                                    new File(errorFile));
+                        }
                     }
 
                     Process process = pb.start();
