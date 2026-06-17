@@ -267,9 +267,11 @@ public class Main {
 
                     if (job.process.isAlive()) {
 
-                        String marker = (i == jobs.size() - 1)
-                                ? "+"
-                                : "-";
+                        String marker ="";
+                        if(i == jobs.size() - 1) marker ="+";
+                        else if(i==jobs.size() - 2) marker="-";
+
+                        
 
                         System.out.printf(
                                 "[%d]%s  %-24s %s%n",
