@@ -299,11 +299,15 @@ public class Main {
 
             else if (command.equals("jobs")) {
 
-                reapJobs(jobs);
+                Job lastJob = jobs.size() >= 1
+                        ? jobs.get(jobs.size() - 1)
+                        : null;
 
-                Job lastJob = jobs.isEmpty() ? null : jobs.get(jobs.size() - 1);
+                Job secondLastJob = jobs.size() >= 2
+                        ? jobs.get(jobs.size() - 2)
+                        : null;
 
-                Job secondLastJob = jobs.size() >= 2 ? jobs.get(jobs.size() - 2) : null;
+                List<Job> toRemove = new ArrayList<>();
 
                 for (Job job : jobs) {
 
@@ -315,16 +319,30 @@ public class Main {
                         marker = "-";
                     }
 
-                    System.out.printf(
-                            "[%d]%s  %-24s %s%n",
-                            job.jobId,
-                            marker,
-                            "Running",
-                            job.command);
-                }
-            }
+                    if (job.process.isAlive()) {
 
-            else {
+                        System.out.printf(
+                                "[%d]%s  %-24s %s%n",
+                                job.jobId,
+                                marker,
+                                "Running",
+                                job.command);
+
+                    } else {
+
+                        System.out.printf(
+                                "[%d]%s  %-24s %s%n",
+                                job.jobId,
+                                marker,
+                                "Done",
+                                job.command.replace(" &", ""));
+
+                        toRemove.add(job);
+                    }
+                }
+
+                jobs.removeAll(toRemove);
+            } else {
 
                 File executable = findExecutable(parts.get(0));
 
