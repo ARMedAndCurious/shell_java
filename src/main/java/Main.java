@@ -111,18 +111,26 @@ public class Main {
             String command = sc.nextLine();
             List<String> parts = parseCommand(command);
             String outputFile = null;
-            int redirectIndex = -1;
+            String errorFile = null;
 
             for (int i = 0; i < parts.size(); i++) {
-                if (parts.get(i).equals(">") || parts.get(i).equals("1>")) {
-                    redirectIndex = i;
+
+                if (parts.get(i).equals(">") ||
+                        parts.get(i).equals("1>")) {
+
                     outputFile = parts.get(i + 1);
+
+                    parts = new ArrayList<>(parts.subList(0, i));
                     break;
                 }
-            }
 
-            if (redirectIndex != -1) {
-                parts = new ArrayList<>(parts.subList(0, redirectIndex));
+                else if (parts.get(i).equals("2>")) {
+
+                    errorFile = parts.get(i + 1);
+
+                    parts = new ArrayList<>(parts.subList(0, i));
+                    break;
+                }
             }
 
             if (command.equals("exit")) {
@@ -137,12 +145,19 @@ public class Main {
                     result = String.join(" ", parts.subList(1, parts.size()));
                 }
 
-                if (outputFile == null) {
-                    System.out.println(result);
-                } else {
+                if (outputFile != null) {
+
                     PrintWriter writer = new PrintWriter(outputFile);
                     writer.println(result);
                     writer.close();
+
+                } else {
+
+                    System.out.println(result);
+                }
+
+                if (errorFile != null) {
+                    new PrintWriter(errorFile).close();
                 }
             }
 
@@ -209,10 +224,15 @@ public class Main {
                     pb.directory(new File(currentDirectory));
 
                     if (outputFile == null) {
-                        pb.inheritIO();
+                        pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
                     } else {
                         pb.redirectOutput(new File(outputFile));
+                    }
+
+                    if (errorFile == null) {
                         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                    } else {
+                        pb.redirectError(new File(errorFile));
                     }
 
                     Process process = pb.start();
