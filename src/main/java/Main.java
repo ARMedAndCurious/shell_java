@@ -194,7 +194,8 @@ public class Main {
                         || input.equals("echo")
                         || input.equals("type")
                         || input.equals("pwd")
-                        || input.equals("cd")) {
+                        || input.equals("cd")
+                        || input.equals("jobs")) {
 
                     System.out.println(input + " is a shell builtin");
                 } else {
@@ -234,6 +235,10 @@ public class Main {
                 } else {
                     System.out.println("cd: " + target + ": No such file or directory");
                 }
+            }
+
+            else if(command.startsWith("jobs")){
+                
             }
 
             else {
