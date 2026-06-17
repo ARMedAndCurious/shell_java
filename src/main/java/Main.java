@@ -152,11 +152,34 @@ public class Main {
         }
     }
 
+    private static int getNextJobId(List<Job> jobs) {
+
+    int id = 1;
+
+    while (true) {
+
+        boolean used = false;
+
+        for (Job job : jobs) {
+            if (job.jobId == id) {
+                used = true;
+                break;
+            }
+        }
+
+        if (!used) {
+            return id;
+        }
+
+        id++;
+    }
+}
+
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
         String currentDirectory = System.getProperty("user.dir");
-        int nextJobId = 1;
+        
         List<Job> jobs = new ArrayList<>();
 
         while (true) {
@@ -382,16 +405,17 @@ public class Main {
                     }
 
                     Process process = pb.start();
+                    int jobId = getNextJobId(jobs);
 
                     if (background) {
 
-                        jobs.add(new Job(nextJobId, process, command));
+                        jobs.add(new Job(jobId, process, command));
 
                         System.out.println(
-                                "[" + nextJobId + "] " +
+                                "[" + jobId + "] " +
                                         process.pid());
 
-                        nextJobId++;
+                        jobId++;
 
                     } else {
 
