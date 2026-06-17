@@ -117,6 +117,41 @@ public class Main {
         return tokens;
     }
 
+    private static void reapJobs(List<Job> jobs) {
+
+        Job lastJob = jobs.isEmpty() ? null : jobs.get(jobs.size() - 1);
+        Job secondLastJob = jobs.size() >= 2
+                ? jobs.get(jobs.size() - 2)
+                : null;
+
+        Iterator<Job> iterator = jobs.iterator();
+
+        while (iterator.hasNext()) {
+
+            Job job = iterator.next();
+
+            if (!job.process.isAlive()) {
+
+                String marker = "";
+
+                if (job == lastJob) {
+                    marker = "+";
+                } else if (job == secondLastJob) {
+                    marker = "-";
+                }
+
+                System.out.printf(
+                        "[%d]%s  %-24s %s%n",
+                        job.jobId,
+                        marker,
+                        "Done",
+                        job.command.replace(" &", ""));
+
+                iterator.remove();
+            }
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
@@ -125,6 +160,7 @@ public class Main {
         List<Job> jobs = new ArrayList<>();
 
         while (true) {
+            reapJobs(jobs);
             System.out.print("$ ");
 
             String command = sc.nextLine();
@@ -263,20 +299,13 @@ public class Main {
 
             else if (command.equals("jobs")) {
 
-                Iterator<Job> iterator = jobs.iterator();
-                Job lastJob = null;
-                Job secondLastJob = null;
+                reapJobs(jobs);
 
-                if (jobs.size() >= 1) {
-                    lastJob = jobs.get(jobs.size() - 1);
-                }
+                Job lastJob = jobs.isEmpty() ? null : jobs.get(jobs.size() - 1);
 
-                if (jobs.size() >= 2) {
-                    secondLastJob = jobs.get(jobs.size() - 2);
-                }
+                Job secondLastJob = jobs.size() >= 2 ? jobs.get(jobs.size() - 2) : null;
 
-                while (iterator.hasNext()) {
-                    Job job = iterator.next();
+                for (Job job : jobs) {
 
                     String marker = "";
 
@@ -286,28 +315,12 @@ public class Main {
                         marker = "-";
                     }
 
-                    if (job.process.isAlive()) {
-
-                        System.out.printf(
-                                "[%d]%s  %-24s %s%n",
-                                job.jobId,
-                                marker,
-                                "Running",
-                                job.command);
-                    }
-
-                    else {
-
-                        System.out.printf(
-                                "[%d]%s  %-24s %s%n",
-                                job.jobId,
-                                marker,
-                                "Done",
-                                job.command.replace(" &", ""));
-
-                        iterator.remove();
-                    }
-
+                    System.out.printf(
+                            "[%d]%s  %-24s %s%n",
+                            job.jobId,
+                            marker,
+                            "Running",
+                            job.command);
                 }
             }
 
