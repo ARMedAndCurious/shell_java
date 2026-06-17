@@ -11,6 +11,7 @@ public class Main {
         int jobId;
         Process process;
         String command;
+        boolean showDone = false;
 
         Job(int jobId,
                 Process process,
@@ -261,17 +262,29 @@ public class Main {
 
             else if (command.equals("jobs")) {
 
-                for (int i = 0; i < jobs.size(); i++) {
+                Iterator<Job> iterator = jobs.iterator();
+                Job lastJob = null;
+                Job secondLastJob = null;
 
-                    Job job = jobs.get(i);
+                if (jobs.size() >= 1) {
+                    lastJob = jobs.get(jobs.size() - 1);
+                }
+
+                if (jobs.size() >= 2) {
+                    secondLastJob = jobs.get(jobs.size() - 2);
+                }
+
+                while (iterator.hasNext()) {
+
+                    String marker = "";
+
+                    if (job == lastJob) {
+                        marker = "+";
+                    } else if (job == secondLastJob) {
+                        marker = "-";
+                    }
 
                     if (job.process.isAlive()) {
-
-                        String marker ="";
-                        if(i == jobs.size() - 1) marker ="+";
-                        else if(i==jobs.size() - 2) marker="-";
-
-                        
 
                         System.out.printf(
                                 "[%d]%s  %-24s %s%n",
@@ -280,6 +293,19 @@ public class Main {
                                 "Running",
                                 job.command);
                     }
+
+                    else {
+
+                        System.out.printf(
+                                "[%d]%s  %-24s %s%n",
+                                job.jobId,
+                                marker,
+                                "Done",
+                                job.command.replace(" &", ""));
+
+                        iterator.remove();
+                    }
+
                 }
             }
 
