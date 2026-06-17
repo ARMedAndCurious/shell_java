@@ -106,6 +106,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
 
         String currentDirectory = System.getProperty("user.dir");
+        int nextJobId = 1;
 
         while (true) {
             System.out.print("$ ");
@@ -119,9 +120,12 @@ public class Main {
             boolean appendOutput = false;
             boolean appendError = false;
 
+            boolean background = false;
+
             for (int i = 0; i < parts.size(); i++) {
 
                 String token = parts.get(i);
+                
 
                 if (token.equals(">") || token.equals("1>")) {
                     outputFile = parts.get(i + 1);
@@ -153,6 +157,12 @@ public class Main {
 
                     parts = new ArrayList<>(parts.subList(0, i));
                     break;
+                }
+
+                
+                if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
+                    background = true;
+                    parts.remove(parts.size() - 1);
                 }
             }
 
@@ -237,8 +247,8 @@ public class Main {
                 }
             }
 
-            else if(command.startsWith("jobs")){
-                
+            else if (command.startsWith("jobs")) {
+
             }
 
             else {
@@ -281,7 +291,20 @@ public class Main {
                     }
 
                     Process process = pb.start();
-                    process.waitFor();
+
+                    if (background) {
+
+                        System.out.println(
+                                "[" + nextJobId + "] " +
+                                        process.pid());
+
+                        nextJobId++;
+
+                    } else {
+
+                        process.waitFor();
+
+                    }
                 }
             }
         }
