@@ -385,15 +385,83 @@ public class Main {
 
             // continue;
             // }
-
             if (command.contains("|")) {
 
                 String[] pipeParts = command.split("\\|");
 
+                // -------- BUILTIN PIPELINE HANDLING --------
+                if (pipeParts.length == 2) {
+
+                    List<String> left = parseCommand(pipeParts[0].trim());
+                    List<String> right = parseCommand(pipeParts[1].trim());
+
+                    // echo hello | wc
+                    if (!left.isEmpty() && left.get(0).equals("echo")) {
+
+                        String output = "";
+
+                        if (left.size() > 1) {
+                            output = String.join(
+                                    " ",
+                                    left.subList(1, left.size()))
+                                    + "\n";
+                        } else {
+                            output = "\n";
+                        }
+
+                        Process p2 = new ProcessBuilder(right)
+                                .directory(new File(currentDirectory))
+                                .start();
+
+                        p2.getOutputStream().write(output.getBytes());
+                        p2.getOutputStream().close();
+
+                        p2.getInputStream().transferTo(System.out);
+
+                        p2.waitFor();
+
+                        continue;
+                    }
+
+                    // ls | type exit
+                    if (!right.isEmpty()
+                            && right.get(0).equals("type")) {
+
+                        String input = right.get(1);
+
+                        if (isBuiltin(input)) {
+
+                            System.out.println(
+                                    input + " is a shell builtin");
+
+                        } else {
+
+                            File executable = findExecutable(input);
+
+                            if (executable != null) {
+
+                                System.out.println(
+                                        input + " is "
+                                                + executable.getAbsolutePath());
+
+                            } else {
+
+                                System.out.println(
+                                        input + ": not found");
+                            }
+                        }
+
+                        continue;
+                    }
+                }
+
+                // -------- MULTI-STAGE PIPELINE --------
+
                 List<List<String>> commands = new ArrayList<>();
 
                 for (String part : pipeParts) {
-                    commands.add(parseCommand(part.trim()));
+                    commands.add(
+                            parseCommand(part.trim()));
                 }
 
                 List<Process> processes = new ArrayList<>();
@@ -421,7 +489,8 @@ public class Main {
                             byte[] buffer = new byte[8192];
                             int bytesRead;
 
-                            while ((bytesRead = current.getInputStream().read(buffer)) != -1) {
+                            while ((bytesRead = current.getInputStream()
+                                    .read(buffer)) != -1) {
 
                                 next.getOutputStream()
                                         .write(buffer, 0, bytesRead);
@@ -449,9 +518,14 @@ public class Main {
                         byte[] buffer = new byte[8192];
                         int bytesRead;
 
-                        while ((bytesRead = last.getInputStream().read(buffer)) != -1) {
+                        while ((bytesRead = last.getInputStream()
+                                .read(buffer)) != -1) {
 
-                            System.out.write(buffer, 0, bytesRead);
+                            System.out.write(
+                                    buffer,
+                                    0,
+                                    bytesRead);
+
                             System.out.flush();
                         }
 
