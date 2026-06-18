@@ -154,32 +154,32 @@ public class Main {
 
     private static int getNextJobId(List<Job> jobs) {
 
-    int id = 1;
+        int id = 1;
 
-    while (true) {
+        while (true) {
 
-        boolean used = false;
+            boolean used = false;
 
-        for (Job job : jobs) {
-            if (job.jobId == id) {
-                used = true;
-                break;
+            for (Job job : jobs) {
+                if (job.jobId == id) {
+                    used = true;
+                    break;
+                }
             }
-        }
 
-        if (!used) {
-            return id;
-        }
+            if (!used) {
+                return id;
+            }
 
-        id++;
+            id++;
+        }
     }
-}
 
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
         String currentDirectory = System.getProperty("user.dir");
-        
+
         List<Job> jobs = new ArrayList<>();
 
         while (true) {
@@ -239,7 +239,49 @@ public class Main {
                 }
             }
 
-            if (command.equals("exit")) {
+            if (command.contains("|")) {
+
+                String[] pipeParts = command.split("\\|", 2);
+
+                List<String> left = parseCommand(pipeParts[0].trim());
+
+                List<String> right = parseCommand(pipeParts[1].trim());
+
+                Process p1 = new ProcessBuilder(left)
+                        .directory(new File(currentDirectory))
+                        .start();
+
+                Process p2 = new ProcessBuilder(right)
+                        .directory(new File(currentDirectory))
+                        .start();
+
+                Thread pipeThread = new Thread(() -> {
+                    try {
+
+                        p1.getInputStream()
+                                .transferTo(
+                                        p2.getOutputStream());
+
+                        p2.getOutputStream().close();
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                pipeThread.start();
+
+                p2.getInputStream()
+                        .transferTo(System.out);
+
+                p1.waitFor();
+                p2.waitFor();
+                pipeThread.join();
+
+                continue;
+            }
+
+            else if (command.equals("exit")) {
                 break;
             }
 
