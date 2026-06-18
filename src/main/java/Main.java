@@ -249,123 +249,207 @@ public class Main {
                 parts.remove(parts.size() - 1);
             }
 
+            // if (command.contains("|")) {
+
+            // String[] pipeParts = command.split("\\|", 2);
+
+            // List<String> left = parseCommand(pipeParts[0].trim());
+
+            // List<String> right = parseCommand(pipeParts[1].trim());
+
+            // if (isBuiltin(left.get(0))) {
+
+            // String output = "";
+
+            // if (left.get(0).equals("echo")) {
+
+            // if (left.size() > 1) {
+            // output = String.join(
+            // " ",
+            // left.subList(1, left.size())) + "\n";
+            // } else {
+            // output = "\n";
+            // }
+            // }
+
+            // Process p2 = new ProcessBuilder(right)
+            // .directory(new File(currentDirectory))
+            // .start();
+
+            // p2.getOutputStream()
+            // .write(output.getBytes());
+
+            // p2.getOutputStream().close();
+
+            // p2.getInputStream()
+            // .transferTo(System.out);
+
+            // p2.waitFor();
+
+            // continue;
+            // }
+
+            // if (isBuiltin(right.get(0))) {
+
+            // Process p1 = new ProcessBuilder(left)
+            // .directory(new File(currentDirectory))
+            // .start();
+
+            // p1.getInputStream()
+            // .transferTo(
+            // java.io.OutputStream.nullOutputStream());
+
+            // p1.waitFor();
+
+            // if (right.get(0).equals("type")) {
+
+            // String input = right.get(1);
+
+            // if (isBuiltin(input)) {
+            // System.out.println(
+            // input +
+            // " is a shell builtin");
+            // } else {
+
+            // File executable = findExecutable(input);
+
+            // if (executable != null) {
+            // System.out.println(
+            // input +
+            // " is " +
+            // executable.getAbsolutePath());
+            // } else {
+            // System.out.println(
+            // input +
+            // ": not found");
+            // }
+            // }
+            // }
+
+            // continue;
+            // }
+
+            // Process p1 = new ProcessBuilder(left)
+            // .directory(new File(currentDirectory))
+            // .start();
+
+            // Process p2 = new ProcessBuilder(right)
+            // .directory(new File(currentDirectory))
+            // .start();
+
+            // Thread pipeThread = new Thread(() -> {
+            // try {
+
+            // byte[] buffer = new byte[8192];
+
+            // int bytesRead;
+
+            // while ((bytesRead = p1.getInputStream().read(buffer)) != -1) {
+
+            // p2.getOutputStream()
+            // .write(buffer, 0, bytesRead);
+
+            // p2.getOutputStream().flush();
+            // }
+
+            // p2.getOutputStream().close();
+
+            // } catch (Exception e) {
+            // }
+            // });
+
+            // Thread outputThread = new Thread(() -> {
+            // try {
+
+            // byte[] buffer = new byte[8192];
+
+            // int bytesRead;
+
+            // while ((bytesRead = p2.getInputStream().read(buffer)) != -1) {
+
+            // System.out.write(buffer, 0, bytesRead);
+            // System.out.flush();
+            // }
+
+            // } catch (Exception e) {
+            // }
+            // });
+
+            // pipeThread.start();
+            // outputThread.start();
+
+            // p2.waitFor();
+
+            // pipeThread.join();
+            // outputThread.join();
+
+            // continue;
+            // }
+
             if (command.contains("|")) {
 
-                String[] pipeParts = command.split("\\|", 2);
+                String[] pipeParts = command.split("\\|");
 
-                List<String> left = parseCommand(pipeParts[0].trim());
+                List<List<String>> commands = new ArrayList<>();
 
-                List<String> right = parseCommand(pipeParts[1].trim());
-
-                if (isBuiltin(left.get(0))) {
-
-                    String output = "";
-
-                    if (left.get(0).equals("echo")) {
-
-                        if (left.size() > 1) {
-                            output = String.join(
-                                    " ",
-                                    left.subList(1, left.size())) + "\n";
-                        } else {
-                            output = "\n";
-                        }
-                    }
-
-                    Process p2 = new ProcessBuilder(right)
-                            .directory(new File(currentDirectory))
-                            .start();
-
-                    p2.getOutputStream()
-                            .write(output.getBytes());
-
-                    p2.getOutputStream().close();
-
-                    p2.getInputStream()
-                            .transferTo(System.out);
-
-                    p2.waitFor();
-
-                    continue;
+                for (String part : pipeParts) {
+                    commands.add(parseCommand(part.trim()));
                 }
 
-                if (isBuiltin(right.get(0))) {
+                List<Process> processes = new ArrayList<>();
 
-                    Process p1 = new ProcessBuilder(left)
+                for (List<String> cmd : commands) {
+
+                    Process p = new ProcessBuilder(cmd)
                             .directory(new File(currentDirectory))
                             .start();
 
-                    p1.getInputStream()
-                            .transferTo(
-                                    java.io.OutputStream.nullOutputStream());
+                    processes.add(p);
+                }
 
-                    p1.waitFor();
+                List<Thread> pipeThreads = new ArrayList<>();
 
-                    if (right.get(0).equals("type")) {
+                for (int i = 0; i < processes.size() - 1; i++) {
 
-                        String input = right.get(1);
+                    Process current = processes.get(i);
+                    Process next = processes.get(i + 1);
 
-                        if (isBuiltin(input)) {
-                            System.out.println(
-                                    input +
-                                            " is a shell builtin");
-                        } else {
+                    Thread t = new Thread(() -> {
 
-                            File executable = findExecutable(input);
+                        try {
 
-                            if (executable != null) {
-                                System.out.println(
-                                        input +
-                                                " is " +
-                                                executable.getAbsolutePath());
-                            } else {
-                                System.out.println(
-                                        input +
-                                                ": not found");
+                            byte[] buffer = new byte[8192];
+                            int bytesRead;
+
+                            while ((bytesRead = current.getInputStream().read(buffer)) != -1) {
+
+                                next.getOutputStream()
+                                        .write(buffer, 0, bytesRead);
+
+                                next.getOutputStream()
+                                        .flush();
                             }
-                        }
-                    }
 
-                    continue;
+                            next.getOutputStream().close();
+
+                        } catch (Exception e) {
+                        }
+                    });
+
+                    pipeThreads.add(t);
+                    t.start();
                 }
 
-                Process p1 = new ProcessBuilder(left)
-                        .directory(new File(currentDirectory))
-                        .start();
-
-                Process p2 = new ProcessBuilder(right)
-                        .directory(new File(currentDirectory))
-                        .start();
-
-                Thread pipeThread = new Thread(() -> {
-                    try {
-
-                        byte[] buffer = new byte[8192];
-
-                        int bytesRead;
-
-                        while ((bytesRead = p1.getInputStream().read(buffer)) != -1) {
-
-                            p2.getOutputStream()
-                                    .write(buffer, 0, bytesRead);
-
-                            p2.getOutputStream().flush();
-                        }
-
-                        p2.getOutputStream().close();
-
-                    } catch (Exception e) {
-                    }
-                });
+                Process last = processes.get(processes.size() - 1);
 
                 Thread outputThread = new Thread(() -> {
+
                     try {
 
                         byte[] buffer = new byte[8192];
-
                         int bytesRead;
 
-                        while ((bytesRead = p2.getInputStream().read(buffer)) != -1) {
+                        while ((bytesRead = last.getInputStream().read(buffer)) != -1) {
 
                             System.out.write(buffer, 0, bytesRead);
                             System.out.flush();
@@ -375,12 +459,14 @@ public class Main {
                     }
                 });
 
-                pipeThread.start();
                 outputThread.start();
 
-                p2.waitFor();
+                last.waitFor();
 
-                pipeThread.join();
+                for (Thread t : pipeThreads) {
+                    t.join();
+                }
+
                 outputThread.join();
 
                 continue;
