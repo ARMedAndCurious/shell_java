@@ -234,12 +234,12 @@ public class Main {
                 }
 
             }
-            
+
             if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
                 background = true;
                 parts.remove(parts.size() - 1);
             }
-            
+
             if (command.contains("|")) {
 
                 String[] pipeParts = command.split("\\|", 2);
@@ -259,33 +259,48 @@ public class Main {
                 Thread pipeThread = new Thread(() -> {
                     try {
 
-                        p1.getInputStream()
-                                .transferTo(
-                                        p2.getOutputStream());
+                        byte[] buffer = new byte[8192];
+
+                        int bytesRead;
+
+                        while ((bytesRead = p1.getInputStream().read(buffer)) != -1) {
+
+                            p2.getOutputStream()
+                                    .write(buffer, 0, bytesRead);
+
+                            p2.getOutputStream().flush();
+                        }
 
                         p2.getOutputStream().close();
 
                     } catch (Exception e) {
-                        
+                    }
+                });
+
+                Thread outputThread = new Thread(() -> {
+                    try {
+
+                        byte[] buffer = new byte[8192];
+
+                        int bytesRead;
+
+                        while ((bytesRead = p2.getInputStream().read(buffer)) != -1) {
+
+                            System.out.write(buffer, 0, bytesRead);
+                            System.out.flush();
+                        }
+
+                    } catch (Exception e) {
                     }
                 });
 
                 pipeThread.start();
+                outputThread.start();
 
-Thread outputThread = new Thread(() -> {
-    try {
-        p2.getInputStream().transferTo(System.out);
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-});
+                p2.waitFor();
 
-outputThread.start();
-
-p2.waitFor();
-
-pipeThread.join();
-outputThread.join();
+                pipeThread.join();
+                outputThread.join();
 
                 continue;
             }
