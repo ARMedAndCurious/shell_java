@@ -180,7 +180,8 @@ public class Main {
                 || cmd.equals("type")
                 || cmd.equals("pwd")
                 || cmd.equals("cd")
-                || cmd.equals("jobs");
+                || cmd.equals("jobs")
+                || cmd.equals("exit");
     }
 
     public static void main(String[] args) throws Exception {
