@@ -175,6 +175,14 @@ public class Main {
         }
     }
 
+    private static boolean isBuiltin(String cmd) {
+        return cmd.equals("echo")
+                || cmd.equals("type")
+                || cmd.equals("pwd")
+                || cmd.equals("cd")
+                || cmd.equals("jobs");
+    }
+
     public static void main(String[] args) throws Exception {
         Scanner sc = new Scanner(System.in);
 
@@ -247,6 +255,78 @@ public class Main {
                 List<String> left = parseCommand(pipeParts[0].trim());
 
                 List<String> right = parseCommand(pipeParts[1].trim());
+
+                if (isBuiltin(left.get(0))) {
+
+                    String output = "";
+
+                    if (left.get(0).equals("echo")) {
+
+                        if (left.size() > 1) {
+                            output = String.join(
+                                    " ",
+                                    left.subList(1, left.size())) + "\n";
+                        } else {
+                            output = "\n";
+                        }
+                    }
+
+                    Process p2 = new ProcessBuilder(right)
+                            .directory(new File(currentDirectory))
+                            .start();
+
+                    p2.getOutputStream()
+                            .write(output.getBytes());
+
+                    p2.getOutputStream().close();
+
+                    p2.getInputStream()
+                            .transferTo(System.out);
+
+                    p2.waitFor();
+
+                    continue;
+                }
+
+                if (isBuiltin(right.get(0))) {
+
+                    Process p1 = new ProcessBuilder(left)
+                            .directory(new File(currentDirectory))
+                            .start();
+
+                    p1.getInputStream()
+                            .transferTo(
+                                    java.io.OutputStream.nullOutputStream());
+
+                    p1.waitFor();
+
+                    if (right.get(0).equals("type")) {
+
+                        String input = right.get(1);
+
+                        if (isBuiltin(input)) {
+                            System.out.println(
+                                    input +
+                                            " is a shell builtin");
+                        } else {
+
+                            File executable = findExecutable(input);
+
+                            if (executable != null) {
+                                System.out.println(
+                                        input +
+                                                " is " +
+                                                executable.getAbsolutePath());
+                            } else {
+                                System.out.println(
+                                        input +
+                                                ": not found");
+                            }
+                        }
+                    }
+
+                    continue;
+                }
 
                 Process p1 = new ProcessBuilder(left)
                         .directory(new File(currentDirectory))
