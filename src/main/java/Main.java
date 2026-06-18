@@ -233,12 +233,13 @@ public class Main {
                     break;
                 }
 
-                if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
-                    background = true;
-                    parts.remove(parts.size() - 1);
-                }
             }
-
+            
+            if (!parts.isEmpty() && parts.get(parts.size() - 1).equals("&")) {
+                background = true;
+                parts.remove(parts.size() - 1);
+            }
+            
             if (command.contains("|")) {
 
                 String[] pipeParts = command.split("\\|", 2);
@@ -265,18 +266,26 @@ public class Main {
                         p2.getOutputStream().close();
 
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        
                     }
                 });
 
                 pipeThread.start();
 
-                p2.getInputStream()
-                        .transferTo(System.out);
+Thread outputThread = new Thread(() -> {
+    try {
+        p2.getInputStream().transferTo(System.out);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+});
 
-                p1.waitFor();
-                p2.waitFor();
-                pipeThread.join();
+outputThread.start();
+
+p2.waitFor();
+
+pipeThread.join();
+outputThread.join();
 
                 continue;
             }
